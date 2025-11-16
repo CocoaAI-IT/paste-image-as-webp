@@ -6,6 +6,8 @@ interface PasteImageAsWebPSettings {
 	timestampFormat: string;
 	imageFolder: string;
 	webpQuality: number;
+	maxImageSize: number; // Maximum pixels (width * height)
+	maxFileSizeMB: number; // Maximum file size in MB
 }
 
 const DEFAULT_SETTINGS: PasteImageAsWebPSettings = {
@@ -13,8 +15,16 @@ const DEFAULT_SETTINGS: PasteImageAsWebPSettings = {
 	fixedFilename: 'image',
 	timestampFormat: 'YYYYMMDDHHmmss',
 	imageFolder: 'attachments',
-	webpQuality: 0.85
+	webpQuality: 0.85,
+	maxImageSize: 16777216, // 4096 * 4096
+	maxFileSizeMB: 10
 }
+
+// Security constants
+const MAX_FILENAME_LENGTH = 255;
+const MAX_DUPLICATE_ATTEMPTS = 1000;
+const UNSAFE_PATH_CHARS = /[<>:"|?*\x00-\x1f]/g;
+const PATH_TRAVERSAL_PATTERN = /\.\.|[\/\\]/g;
 
 export default class PasteImageAsWebPPlugin extends Plugin {
 	settings: PasteImageAsWebPSettings;
@@ -45,6 +55,87 @@ export default class PasteImageAsWebPPlugin extends Plugin {
 		await this.saveData(this.settings);
 	}
 
+	/**
+	 * Sanitizes a filename to remove dangerous characters
+	 */
+	private sanitizeFilename(filename: string): string {
+		// Remove path traversal attempts and unsafe characters
+		let sanitized = filename
+			.replace(PATH_TRAVERSAL_PATTERN, '')
+			.replace(UNSAFE_PATH_CHARS, '_')
+			.replace(/\0/g, ''); // Remove null bytes
+
+		// Trim whitespace and dots from edges
+		sanitized = sanitized.trim().replace(/^\.+|\.+$/g, '');
+
+		// Ensure filename is not empty
+		if (!sanitized) {
+			sanitized = 'image';
+		}
+
+		// Limit filename length
+		if (sanitized.length > MAX_FILENAME_LENGTH) {
+			sanitized = sanitized.substring(0, MAX_FILENAME_LENGTH);
+		}
+
+		return sanitized;
+	}
+
+	/**
+	 * Validates and sanitizes a folder path
+	 */
+	private sanitizeFolderPath(path: string): string {
+		// Remove path traversal attempts
+		let sanitized = path
+			.replace(/\.\./g, '')
+			.replace(/\0/g, '') // Remove null bytes
+			.replace(/^[\/\\]+/, '') // Remove leading slashes
+			.replace(/[\/\\]+$/, ''); // Remove trailing slashes
+
+		// Normalize slashes to forward slashes
+		sanitized = sanitized.replace(/\\/g, '/');
+
+		// Remove unsafe characters
+		sanitized = sanitized.replace(UNSAFE_PATH_CHARS, '_');
+
+		// Ensure path is not empty
+		if (!sanitized) {
+			sanitized = 'attachments';
+		}
+
+		// Prevent absolute paths
+		if (sanitized.startsWith('/') || sanitized.match(/^[a-zA-Z]:/)) {
+			sanitized = 'attachments';
+		}
+
+		return sanitized;
+	}
+
+	/**
+	 * Validates image file size
+	 */
+	private validateFileSize(file: File): void {
+		const maxBytes = this.settings.maxFileSizeMB * 1024 * 1024;
+		if (file.size > maxBytes) {
+			throw new Error(`Image file size exceeds ${this.settings.maxFileSizeMB}MB limit`);
+		}
+	}
+
+	/**
+	 * Validates image dimensions
+	 */
+	private validateImageDimensions(width: number, height: number): void {
+		const totalPixels = width * height;
+		if (totalPixels > this.settings.maxImageSize) {
+			throw new Error(`Image dimensions exceed maximum allowed size`);
+		}
+
+		// Additional sanity checks
+		if (width <= 0 || height <= 0 || width > 16384 || height > 16384) {
+			throw new Error(`Invalid image dimensions`);
+		}
+	}
+
 	private async handlePaste(evt: ClipboardEvent, editor: Editor, view: MarkdownView) {
 		// クリップボードからファイルを取得
 		const files = evt.clipboardData?.files;
@@ -72,6 +163,9 @@ export default class PasteImageAsWebPPlugin extends Plugin {
 
 	private async processImage(file: File, editor: Editor, view: MarkdownView) {
 		try {
+			// Validate file size
+			this.validateFileSize(file);
+
 			// 画像をWebPに変換
 			const webpBlob = await this.convertToWebP(file);
 
@@ -87,8 +181,27 @@ export default class PasteImageAsWebPPlugin extends Plugin {
 			new Notice(`Image saved as ${filename}`);
 		} catch (error) {
 			console.error('Error processing image:', error);
-			new Notice('Failed to process image: ' + error.message);
+			// Use generic error message to avoid information leakage
+			const userMessage = this.getSafeErrorMessage(error);
+			new Notice(userMessage);
 		}
+	}
+
+	/**
+	 * Returns a safe error message for user display
+	 */
+	private getSafeErrorMessage(error: any): string {
+		const errorMsg = error?.message || '';
+
+		// Allow specific known error messages
+		if (errorMsg.includes('exceeds') ||
+		    errorMsg.includes('dimensions') ||
+		    errorMsg.includes('Invalid')) {
+			return errorMsg;
+		}
+
+		// Generic error for unknown issues
+		return 'Failed to process image. Please check the image format and size.';
 	}
 
 	private async convertToWebP(file: File): Promise<Blob> {
@@ -99,6 +212,9 @@ export default class PasteImageAsWebPPlugin extends Plugin {
 			reader.onload = (e) => {
 				img.onload = () => {
 					try {
+						// Validate image dimensions
+						this.validateImageDimensions(img.width, img.height);
+
 						// Canvasを作成
 						const canvas = document.createElement('canvas');
 						canvas.width = img.width;
@@ -145,12 +261,14 @@ export default class PasteImageAsWebPPlugin extends Plugin {
 	}
 
 	private generateFilename(): string {
+		let baseFilename: string;
+
 		if (this.settings.filenameFormat === 'fixed') {
-			return `${this.settings.fixedFilename}.webp`;
+			baseFilename = this.sanitizeFilename(this.settings.fixedFilename);
 		} else {
 			// タイムスタンプフォーマット
 			const now = new Date();
-			const format = this.settings.timestampFormat;
+			const format = this.sanitizeFilename(this.settings.timestampFormat);
 
 			let filename = format
 				.replace('YYYY', now.getFullYear().toString())
@@ -160,13 +278,15 @@ export default class PasteImageAsWebPPlugin extends Plugin {
 				.replace('mm', now.getMinutes().toString().padStart(2, '0'))
 				.replace('ss', now.getSeconds().toString().padStart(2, '0'));
 
-			return `${filename}.webp`;
+			baseFilename = this.sanitizeFilename(filename);
 		}
+
+		return `${baseFilename}.webp`;
 	}
 
 	private async saveImage(blob: Blob, filename: string, view: MarkdownView): Promise<string> {
-		// 保存先フォルダを確保
-		const folder = this.settings.imageFolder;
+		// Sanitize folder path
+		const folder = this.sanitizeFolderPath(this.settings.imageFolder);
 
 		// フォルダが存在しない場合は作成
 		const folderExists = await this.app.vault.adapter.exists(folder);
@@ -178,8 +298,12 @@ export default class PasteImageAsWebPPlugin extends Plugin {
 		let filepath = `${folder}/${filename}`;
 		let counter = 1;
 
-		// 同名ファイルが存在する場合は番号を追加
+		// 同名ファイルが存在する場合は番号を追加（上限付き）
 		while (await this.app.vault.adapter.exists(filepath)) {
+			if (counter >= MAX_DUPLICATE_ATTEMPTS) {
+				throw new Error('Too many duplicate files. Please use a different filename format.');
+			}
+
 			const nameWithoutExt = filename.replace('.webp', '');
 			filepath = `${folder}/${nameWithoutExt}-${counter}.webp`;
 			counter++;
@@ -298,6 +422,45 @@ class PasteImageAsWebPSettingTab extends PluginSettingTab {
 					this.plugin.settings.webpQuality = value;
 					await this.plugin.saveSettings();
 				}));
+
+		// Security settings header
+		containerEl.createEl('h3', {text: 'Security Settings'});
+
+		// 最大画像サイズ
+		new Setting(containerEl)
+			.setName('Maximum image size')
+			.setDesc('Maximum total pixels (width × height). Default: 16777216 (4096×4096)')
+			.addText(text => text
+				.setPlaceholder('16777216')
+				.setValue(this.plugin.settings.maxImageSize.toString())
+				.onChange(async (value) => {
+					const numValue = parseInt(value);
+					if (!isNaN(numValue) && numValue > 0) {
+						this.plugin.settings.maxImageSize = numValue;
+						await this.plugin.saveSettings();
+					}
+				}));
+
+		// 最大ファイルサイズ
+		new Setting(containerEl)
+			.setName('Maximum file size (MB)')
+			.setDesc('Maximum file size in megabytes. Default: 10MB')
+			.addText(text => text
+				.setPlaceholder('10')
+				.setValue(this.plugin.settings.maxFileSizeMB.toString())
+				.onChange(async (value) => {
+					const numValue = parseFloat(value);
+					if (!isNaN(numValue) && numValue > 0) {
+						this.plugin.settings.maxFileSizeMB = numValue;
+						await this.plugin.saveSettings();
+					}
+				}));
+
+		// Security notice
+		containerEl.createEl('div', {
+			text: 'Security settings help prevent malicious images from consuming excessive resources.',
+			cls: 'setting-item-description'
+		});
 	}
 
 	private generateSampleFilename(): string {

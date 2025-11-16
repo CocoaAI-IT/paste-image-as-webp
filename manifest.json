@@ -1,7 +1,7 @@
 {
   "id": "paste-image-as-webp",
   "name": "Paste Image as WebP",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "minAppVersion": "0.15.0",
   "description": "Automatically converts pasted images to WebP format with configurable filenames",
   "author": "CocoaAI-IT",
