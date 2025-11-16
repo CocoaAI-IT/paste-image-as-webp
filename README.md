@@ -15,19 +15,45 @@ Obsidianでクリップボードから画像をペーストする際に、自動
 
 ## インストール
 
-### 手動インストール
+### Obsidianコミュニティプラグインから（推奨）
 
-1. このリポジトリをクローンまたはダウンロード
-2. `npm install` で依存関係をインストール
-3. `npm run build` でビルド
-4. 生成された `main.js` と `manifest.json` を Obsidianのプラグインフォルダにコピー
-   - Windows: `%appdata%\Obsidian\plugins\paste-image-as-webp\`
-   - macOS: `~/Library/Application Support/obsidian/plugins/paste-image-as-webp/`
-   - Linux: `~/.config/obsidian/plugins/paste-image-as-webp/`
+**準備中**: このプラグインは現在、Obsidianコミュニティプラグインへの登録申請準備中です。
+
+承認後は以下の手順で簡単にインストールできます：
+
+1. Obsidianの設定を開く
+2. 「コミュニティプラグイン」→「閲覧」をクリック
+3. 「Paste Image as WebP」を検索
+4. 「インストール」をクリック
+5. インストール後、「有効化」をクリック
+
+### GitHubリリースから手動インストール（現在利用可能）
+
+コミュニティプラグイン承認前に使用したい場合：
+
+1. [最新リリース](https://github.com/CocoaAI-IT/obsidian_exteition/releases)から以下をダウンロード:
+   - `main.js`
+   - `manifest.json`
+   - `styles.css`
+
+2. Obsidianのプラグインフォルダに`paste-image-as-webp`フォルダを作成:
+   - Windows: `%appdata%\Obsidian\<your-vault>\.obsidian\plugins\paste-image-as-webp\`
+   - macOS: `~/Library/Application Support/obsidian/<your-vault>/.obsidian/plugins/paste-image-as-webp/`
+   - Linux: `~/.config/obsidian/<your-vault>/.obsidian/plugins/paste-image-as-webp/`
+
+3. ダウンロードした3つのファイルをこのフォルダに配置
+
+4. Obsidianを再起動し、設定からプラグインを有効化
 
 ### 開発者向け
 
+プラグインの開発やカスタマイズをしたい場合：
+
 ```bash
+# リポジトリをクローン
+git clone https://github.com/CocoaAI-IT/obsidian_exteition.git
+cd obsidian_exteition
+
 # 依存関係のインストール
 npm install
 
@@ -37,6 +63,8 @@ npm run dev
 # プロダクションビルド
 npm run build
 ```
+
+詳細は [COMMUNITY_PLUGIN_GUIDE.md](COMMUNITY_PLUGIN_GUIDE.md) を参照してください。
 
 ## 使い方
 
