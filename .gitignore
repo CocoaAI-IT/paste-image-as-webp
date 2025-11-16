@@ -1,0 +1,18 @@
+# Node
+node_modules
+package-lock.json
+
+# Build
+main.js
+*.js.map
+
+# IDE
+.vscode
+.idea
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Obsidian
+data.json
