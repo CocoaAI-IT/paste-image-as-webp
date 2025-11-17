@@ -8,19 +8,25 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v3
 
       - name: Use Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: "18.x"
+          node-version: "22.x"
 
       - name: Build plugin
         run: |
           npm install
           npm run build
+
+      - name: Prepare release assets
+        run: |
+          cp releases/manifest.json .
+          cp releases/styles.css . || true
 
       - name: Create release
         env:
