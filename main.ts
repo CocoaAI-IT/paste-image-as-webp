@@ -5,6 +5,7 @@ interface PasteImageAsWebPSettings {
 	fixedFilename: string;
 	timestampFormat: string;
 	imageFolder: string;
+	imageFolderLocation: 'vault-root' | 'current-folder';
 	webpQuality: number;
 	maxImageSize: number; // Maximum pixels (width * height)
 	maxFileSizeMB: number; // Maximum file size in MB
@@ -15,6 +16,7 @@ const DEFAULT_SETTINGS: PasteImageAsWebPSettings = {
 	fixedFilename: 'image',
 	timestampFormat: 'YYYYMMDDHHmmss',
 	imageFolder: 'attachments',
+	imageFolderLocation: 'current-folder', // Default to current folder
 	webpQuality: 0.85,
 	maxImageSize: 16777216, // 4096 * 4096
 	maxFileSizeMB: 10
@@ -285,8 +287,29 @@ export default class PasteImageAsWebPPlugin extends Plugin {
 	}
 
 	private async saveImage(blob: Blob, filename: string, view: MarkdownView): Promise<string> {
-		// Sanitize folder path
-		const folder = this.sanitizeFolderPath(this.settings.imageFolder);
+		// Determine base folder based on settings
+		let baseFolder: string;
+
+		if (this.settings.imageFolderLocation === 'current-folder') {
+			// Get current file's folder
+			const currentFile = view.file;
+			if (currentFile) {
+				const currentFilePath = currentFile.parent?.path || '';
+				baseFolder = currentFilePath;
+			} else {
+				// Fallback to vault root if no file
+				baseFolder = '';
+			}
+		} else {
+			// Vault root
+			baseFolder = '';
+		}
+
+		// Sanitize folder name
+		const folderName = this.sanitizeFolderPath(this.settings.imageFolder);
+
+		// Combine base folder with image folder
+		const folder = baseFolder ? `${baseFolder}/${folderName}` : folderName;
 
 		// フォルダが存在しない場合は作成
 		const folderExists = await this.app.vault.adapter.exists(folder);
@@ -398,10 +421,28 @@ class PasteImageAsWebPSettingTab extends PluginSettingTab {
 			});
 		}
 
-		// 保存先フォルダ
+		// 保存先の基準
 		new Setting(containerEl)
-			.setName('Image folder')
-			.setDesc('Folder to save images (relative to vault root)')
+			.setName('Image folder location')
+			.setDesc('Where to create the image folder')
+			.addDropdown(dropdown => dropdown
+				.addOption('current-folder', 'Same folder as current note')
+				.addOption('vault-root', 'Vault root folder')
+				.setValue(this.plugin.settings.imageFolderLocation)
+				.onChange(async (value: 'current-folder' | 'vault-root') => {
+					this.plugin.settings.imageFolderLocation = value;
+					await this.plugin.saveSettings();
+					this.display(); // 再描画
+				}));
+
+		// 保存先フォルダ名
+		const folderDescription = this.plugin.settings.imageFolderLocation === 'current-folder'
+			? 'Folder name (created in the same directory as the current note)'
+			: 'Folder path (relative to vault root)';
+
+		new Setting(containerEl)
+			.setName('Image folder name')
+			.setDesc(folderDescription)
 			.addText(text => text
 				.setPlaceholder('attachments')
 				.setValue(this.plugin.settings.imageFolder)
