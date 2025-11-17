@@ -1,4 +1,4 @@
-import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting, TFile } from 'obsidian';
+import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
 
 interface PasteImageAsWebPSettings {
 	filenameFormat: 'fixed' | 'timestamp';
@@ -27,8 +27,8 @@ const DEFAULT_SETTINGS: PasteImageAsWebPSettings = {
 // Security constants
 const MAX_FILENAME_LENGTH = 255;
 const MAX_DUPLICATE_ATTEMPTS = 1000;
-const UNSAFE_PATH_CHARS = /[<>:"|?*\x00-\x1f]/g;
-const PATH_TRAVERSAL_PATTERN = /\.\.|[\/\\]/g;
+const UNSAFE_PATH_CHARS = /[<>:"|?*\u0000-\u001f]/g;
+const PATH_TRAVERSAL_PATTERN = /\.\.|[\\/]/g;
 
 export default class PasteImageAsWebPPlugin extends Plugin {
 	settings: PasteImageAsWebPSettings;
@@ -43,12 +43,10 @@ export default class PasteImageAsWebPPlugin extends Plugin {
 
 		// 設定タブを追加
 		this.addSettingTab(new PasteImageAsWebPSettingTab(this.app, this));
-
-		console.log('Paste Image as WebP plugin loaded');
 	}
 
 	onunload() {
-		console.log('Paste Image as WebP plugin unloaded');
+		// Plugin cleanup
 	}
 
 	async loadSettings() {
@@ -194,8 +192,8 @@ export default class PasteImageAsWebPPlugin extends Plugin {
 	/**
 	 * Returns a safe error message for user display
 	 */
-	private getSafeErrorMessage(error: any): string {
-		const errorMsg = error?.message || '';
+	private getSafeErrorMessage(error: unknown): string {
+		const errorMsg = error instanceof Error ? error.message : '';
 
 		// Allow specific known error messages
 		if (errorMsg.includes('exceeds') ||
@@ -379,14 +377,12 @@ class PasteImageAsWebPSettingTab extends PluginSettingTab {
 
 		containerEl.empty();
 
-		containerEl.createEl('h2', {text: 'Paste Image as WebP Settings'});
-
 		// Reset to defaults button
 		new Setting(containerEl)
 			.setName('Reset to defaults')
 			.setDesc('Reset all settings to their default values')
 			.addButton(button => button
-				.setButtonText('Reset to Defaults')
+				.setButtonText('Reset to defaults')
 				.setCta()
 				.onClick(async () => {
 					// Confirm before resetting
@@ -512,9 +508,10 @@ class PasteImageAsWebPSettingTab extends PluginSettingTab {
 				}));
 
 		// Security settings header
-		containerEl.createEl('h3', {text: 'Security Settings'});
+		new Setting(containerEl)
+			.setName('Security settings')
+			.setHeading();
 
-		// 最大画像サイズ
 		new Setting(containerEl)
 			.setName('Maximum image size')
 			.setDesc('Maximum total pixels (width × height). Default: 16777216 (4096×4096)')
@@ -608,17 +605,21 @@ class ConfirmResetModal extends Modal {
 	onOpen() {
 		const {contentEl} = this;
 
-		contentEl.createEl('h2', {text: 'Reset Settings to Defaults?'});
+		contentEl.createEl('p', {
+			text: 'Reset settings to defaults?'
+		});
 		contentEl.createEl('p', {
 			text: 'This will reset all settings to their default values. This action cannot be undone.'
 		});
 
 		// Button container
 		const buttonContainer = contentEl.createDiv({cls: 'modal-button-container'});
-		buttonContainer.style.display = 'flex';
-		buttonContainer.style.justifyContent = 'flex-end';
-		buttonContainer.style.gap = '10px';
-		buttonContainer.style.marginTop = '20px';
+		buttonContainer.setCssProps({
+			'display': 'flex',
+			'justify-content': 'flex-end',
+			'gap': '10px',
+			'margin-top': '20px'
+		});
 
 		// Cancel button
 		const cancelButton = buttonContainer.createEl('button', {text: 'Cancel'});
@@ -629,7 +630,7 @@ class ConfirmResetModal extends Modal {
 
 		// Reset button
 		const resetButton = buttonContainer.createEl('button', {
-			text: 'Reset to Defaults',
+			text: 'Reset to defaults',
 			cls: 'mod-warning'
 		});
 		resetButton.addEventListener('click', () => {
