@@ -5,7 +5,8 @@ interface PasteImageAsWebPSettings {
 	fixedFilename: string;
 	timestampFormat: string;
 	imageFolder: string;
-	imageFolderLocation: 'vault-root' | 'current-folder';
+	imageFolderLocation: 'vault-root' | 'current-folder' | 'custom-path';
+	customFolderPath: string; // Custom path when imageFolderLocation is 'custom-path'
 	webpQuality: number;
 	maxImageSize: number; // Maximum pixels (width * height)
 	maxFileSizeMB: number; // Maximum file size in MB
@@ -17,6 +18,7 @@ const DEFAULT_SETTINGS: PasteImageAsWebPSettings = {
 	timestampFormat: 'YYYYMMDDHHmmss',
 	imageFolder: 'attachments',
 	imageFolderLocation: 'current-folder', // Default to current folder
+	customFolderPath: 'project/images', // Default custom path
 	webpQuality: 0.85,
 	maxImageSize: 16777216, // 4096 * 4096
 	maxFileSizeMB: 10
@@ -287,12 +289,13 @@ export default class PasteImageAsWebPPlugin extends Plugin {
 	}
 
 	private async saveImage(blob: Blob, filename: string, view: MarkdownView): Promise<string> {
-		// Determine base folder based on settings
-		let baseFolder: string;
+		// Determine folder path based on settings
+		let folder: string;
 
 		if (this.settings.imageFolderLocation === 'current-folder') {
 			// Get current file's folder
 			const currentFile = view.file;
+			let baseFolder: string;
 			if (currentFile) {
 				const currentFilePath = currentFile.parent?.path || '';
 				baseFolder = currentFilePath;
@@ -300,16 +303,22 @@ export default class PasteImageAsWebPPlugin extends Plugin {
 				// Fallback to vault root if no file
 				baseFolder = '';
 			}
+
+			// Sanitize folder name
+			const folderName = this.sanitizeFolderPath(this.settings.imageFolder);
+
+			// Combine base folder with image folder
+			folder = baseFolder ? `${baseFolder}/${folderName}` : folderName;
+
+		} else if (this.settings.imageFolderLocation === 'custom-path') {
+			// Use custom path directly (already includes folder name)
+			folder = this.sanitizeFolderPath(this.settings.customFolderPath);
+
 		} else {
 			// Vault root
-			baseFolder = '';
+			const folderName = this.sanitizeFolderPath(this.settings.imageFolder);
+			folder = folderName;
 		}
-
-		// Sanitize folder name
-		const folderName = this.sanitizeFolderPath(this.settings.imageFolder);
-
-		// Combine base folder with image folder
-		const folder = baseFolder ? `${baseFolder}/${folderName}` : folderName;
 
 		// フォルダが存在しない場合は作成
 		const folderExists = await this.app.vault.adapter.exists(folder);
@@ -443,28 +452,51 @@ class PasteImageAsWebPSettingTab extends PluginSettingTab {
 			.addDropdown(dropdown => dropdown
 				.addOption('current-folder', 'Same folder as current note')
 				.addOption('vault-root', 'Vault root folder')
+				.addOption('custom-path', 'Custom path')
 				.setValue(this.plugin.settings.imageFolderLocation)
-				.onChange(async (value: 'current-folder' | 'vault-root') => {
+				.onChange(async (value: 'current-folder' | 'vault-root' | 'custom-path') => {
 					this.plugin.settings.imageFolderLocation = value;
 					await this.plugin.saveSettings();
 					this.display(); // 再描画
 				}));
 
-		// 保存先フォルダ名
-		const folderDescription = this.plugin.settings.imageFolderLocation === 'current-folder'
-			? 'Folder name (created in the same directory as the current note)'
-			: 'Folder path (relative to vault root)';
+		// カスタムパスの入力フィールド（custom-pathの場合のみ表示）
+		if (this.plugin.settings.imageFolderLocation === 'custom-path') {
+			new Setting(containerEl)
+				.setName('Custom folder path')
+				.setDesc('Full path to the folder (e.g., "project/images" or "resources/attachments")')
+				.addText(text => text
+					.setPlaceholder('project/images')
+					.setValue(this.plugin.settings.customFolderPath)
+					.onChange(async (value) => {
+						this.plugin.settings.customFolderPath = value || 'project/images';
+						await this.plugin.saveSettings();
+					}));
 
-		new Setting(containerEl)
-			.setName('Image folder name')
-			.setDesc(folderDescription)
-			.addText(text => text
-				.setPlaceholder('attachments')
-				.setValue(this.plugin.settings.imageFolder)
-				.onChange(async (value) => {
-					this.plugin.settings.imageFolder = value || 'attachments';
-					await this.plugin.saveSettings();
-				}));
+			// サンプル表示
+			containerEl.createEl('div', {
+				text: `Images will be saved to: ${this.plugin.settings.customFolderPath}/`,
+				cls: 'setting-item-description'
+			});
+		}
+
+		// 保存先フォルダ名（current-folderまたはvault-rootの場合のみ表示）
+		if (this.plugin.settings.imageFolderLocation !== 'custom-path') {
+			const folderDescription = this.plugin.settings.imageFolderLocation === 'current-folder'
+				? 'Folder name (created in the same directory as the current note)'
+				: 'Folder path (relative to vault root)';
+
+			new Setting(containerEl)
+				.setName('Image folder name')
+				.setDesc(folderDescription)
+				.addText(text => text
+					.setPlaceholder('attachments')
+					.setValue(this.plugin.settings.imageFolder)
+					.onChange(async (value) => {
+						this.plugin.settings.imageFolder = value || 'attachments';
+						await this.plugin.saveSettings();
+					}));
+		}
 
 		// WebP品質
 		new Setting(containerEl)
