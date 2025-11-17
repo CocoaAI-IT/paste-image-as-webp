@@ -1,4 +1,4 @@
-import { App, Editor, MarkdownView, Notice, Plugin, PluginSettingTab, Setting, TFile } from 'obsidian';
+import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting, TFile } from 'obsidian';
 
 interface PasteImageAsWebPSettings {
 	filenameFormat: 'fixed' | 'timestamp';
@@ -372,6 +372,21 @@ class PasteImageAsWebPSettingTab extends PluginSettingTab {
 
 		containerEl.createEl('h2', {text: 'Paste Image as WebP Settings'});
 
+		// Reset to defaults button
+		new Setting(containerEl)
+			.setName('Reset to defaults')
+			.setDesc('Reset all settings to their default values')
+			.addButton(button => button
+				.setButtonText('Reset to Defaults')
+				.setCta()
+				.onClick(async () => {
+					// Confirm before resetting
+					const confirmed = await this.confirmReset();
+					if (confirmed) {
+						await this.resetToDefaults();
+					}
+				}));
+
 		// ファイル名形式
 		new Setting(containerEl)
 			.setName('Filename format')
@@ -517,5 +532,82 @@ class PasteImageAsWebPSettingTab extends PluginSettingTab {
 			.replace('ss', now.getSeconds().toString().padStart(2, '0'));
 
 		return `${filename}.webp`;
+	}
+
+	/**
+	 * Confirms with the user before resetting to defaults
+	 */
+	private async confirmReset(): Promise<boolean> {
+		return new Promise((resolve) => {
+			const modal = new ConfirmResetModal(this.app, (confirmed) => {
+				resolve(confirmed);
+			});
+			modal.open();
+		});
+	}
+
+	/**
+	 * Resets all settings to default values
+	 */
+	private async resetToDefaults(): Promise<void> {
+		// Reset to default settings
+		this.plugin.settings = Object.assign({}, DEFAULT_SETTINGS);
+		await this.plugin.saveSettings();
+
+		// Refresh the settings display
+		this.display();
+
+		// Show success message
+		new Notice('Settings reset to defaults');
+	}
+}
+
+/**
+ * Confirmation modal for resetting settings
+ */
+class ConfirmResetModal extends Modal {
+	private onConfirm: (confirmed: boolean) => void;
+
+	constructor(app: App, onConfirm: (confirmed: boolean) => void) {
+		super(app);
+		this.onConfirm = onConfirm;
+	}
+
+	onOpen() {
+		const {contentEl} = this;
+
+		contentEl.createEl('h2', {text: 'Reset Settings to Defaults?'});
+		contentEl.createEl('p', {
+			text: 'This will reset all settings to their default values. This action cannot be undone.'
+		});
+
+		// Button container
+		const buttonContainer = contentEl.createDiv({cls: 'modal-button-container'});
+		buttonContainer.style.display = 'flex';
+		buttonContainer.style.justifyContent = 'flex-end';
+		buttonContainer.style.gap = '10px';
+		buttonContainer.style.marginTop = '20px';
+
+		// Cancel button
+		const cancelButton = buttonContainer.createEl('button', {text: 'Cancel'});
+		cancelButton.addEventListener('click', () => {
+			this.close();
+			this.onConfirm(false);
+		});
+
+		// Reset button
+		const resetButton = buttonContainer.createEl('button', {
+			text: 'Reset to Defaults',
+			cls: 'mod-warning'
+		});
+		resetButton.addEventListener('click', () => {
+			this.close();
+			this.onConfirm(true);
+		});
+	}
+
+	onClose() {
+		const {contentEl} = this;
+		contentEl.empty();
 	}
 }
