@@ -34,8 +34,10 @@ const PATH_TRAVERSAL_PATTERN = /\.\.|[\\/]/g;
  * Removes control characters from a string
  */
 function removeControlCharacters(str: string): string {
-	const pattern = new RegExp('[\\u0000-\\u001F\\u007F-\\u009F]', 'g');
-	return str.replace(pattern, '');
+	return str.split('').filter(char => {
+		const code = char.charCodeAt(0);
+		return !(code <= 31 || (code >= 127 && code <= 159));
+	}).join('');
 }
 
 export default class PasteImageAsWebPPlugin extends Plugin {
@@ -436,9 +438,9 @@ class PasteImageAsWebPSettingTab extends PluginSettingTab {
 		if (this.plugin.settings.filenameFormat === 'timestamp') {
 			new Setting(containerEl)
 				.setName('Timestamp format')
-				.setDesc('Format: YYYY (Year), MM (Month), DD (Day), HH (Hour), mm (Minute), ss (Second)')
+				.setDesc('Format: YYYY (year), MM (month), DD (day), HH (hour), mm (minute), ss (second)')
 				.addText(text => text
-					.setPlaceholder('Yyyymmddhhmmss')
+					.setPlaceholder('YYYYMMDDHHmmss')
 					.setValue(this.plugin.settings.timestampFormat)
 					.onChange(async (value) => {
 						this.plugin.settings.timestampFormat = value || 'YYYYMMDDHHmmss';
@@ -508,7 +510,7 @@ class PasteImageAsWebPSettingTab extends PluginSettingTab {
 
 		// WebP品質
 		new Setting(containerEl)
-			.setName('Image quality (webp)')
+			.setName('Image quality (WebP)')
 			.setDesc('Image quality (0.0 - 1.0, higher is better quality)')
 			.addSlider(slider => slider
 				.setLimits(0.1, 1.0, 0.05)
@@ -539,8 +541,8 @@ class PasteImageAsWebPSettingTab extends PluginSettingTab {
 				}));
 
 		new Setting(containerEl)
-			.setName('Maximum file size (mb)')
-			.setDesc('Maximum file size in megabytes. default: 10mb')
+			.setName('Maximum file size (MB)')
+			.setDesc('Maximum file size in megabytes. Default: 10 MB')
 			.addText(text => text
 				.setPlaceholder('10')
 				.setValue(this.plugin.settings.maxFileSizeMB.toString())
