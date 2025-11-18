@@ -34,6 +34,7 @@ const PATH_TRAVERSAL_PATTERN = /\.\.|[\\/]/g;
  * Removes control characters from a string
  */
 function removeControlCharacters(str: string): string {
+	// eslint-disable-next-line no-control-regex
 	const pattern = new RegExp('[\\u0000-\\u001F\\u007F-\\u009F]', 'g');
 	return str.replace(pattern, '');
 }
@@ -438,7 +439,7 @@ class PasteImageAsWebPSettingTab extends PluginSettingTab {
 				.setName('Timestamp format')
 				.setDesc('Format: YYYY (year), MM (month), DD (day), HH (hour), mm (minute), ss (second)')
 				.addText(text => text
-					.setPlaceholder('YYYYMMDDHHmmss')
+					.setPlaceholder('Yyyymmddhhmmss')
 					.setValue(this.plugin.settings.timestampFormat)
 					.onChange(async (value) => {
 						this.plugin.settings.timestampFormat = value || 'YYYYMMDDHHmmss';
@@ -508,7 +509,7 @@ class PasteImageAsWebPSettingTab extends PluginSettingTab {
 
 		// WebP品質
 		new Setting(containerEl)
-			.setName('Image quality (WebP)')
+			.setName('Image quality (webp)')
 			.setDesc('Image quality (0.0 - 1.0, higher is better quality)')
 			.addSlider(slider => slider
 				.setLimits(0.1, 1.0, 0.05)
@@ -539,8 +540,8 @@ class PasteImageAsWebPSettingTab extends PluginSettingTab {
 				}));
 
 		new Setting(containerEl)
-			.setName('Maximum file size (MB)')
-			.setDesc('Maximum file size in megabytes. Default: 10MB')
+			.setName('Maximum file size (mb)')
+			.setDesc('Maximum file size in megabytes. default: 10mb')
 			.addText(text => text
 				.setPlaceholder('10')
 				.setValue(this.plugin.settings.maxFileSizeMB.toString())
