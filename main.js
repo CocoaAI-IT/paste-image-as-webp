@@ -44,8 +44,12 @@ var DEFAULT_SETTINGS = {
 };
 var MAX_FILENAME_LENGTH = 255;
 var MAX_DUPLICATE_ATTEMPTS = 1e3;
-var UNSAFE_PATH_CHARS = /[<>:"|?*\u0000-\u001f]/g;
+var UNSAFE_PATH_CHARS = /[<>:"|?*]/g;
 var PATH_TRAVERSAL_PATTERN = /\.\.|[\\/]/g;
+function removeControlCharacters(str) {
+  const pattern = new RegExp("[\\u0000-\\u001F\\u007F-\\u009F]", "g");
+  return str.replace(pattern, "");
+}
 var PasteImageAsWebPPlugin = class extends import_obsidian.Plugin {
   async onload() {
     await this.loadSettings();
@@ -66,7 +70,8 @@ var PasteImageAsWebPPlugin = class extends import_obsidian.Plugin {
    * Sanitizes a filename to remove dangerous characters
    */
   sanitizeFilename(filename) {
-    let sanitized = filename.replace(PATH_TRAVERSAL_PATTERN, "").replace(UNSAFE_PATH_CHARS, "_").replace(/\0/g, "");
+    let sanitized = removeControlCharacters(filename);
+    sanitized = sanitized.replace(PATH_TRAVERSAL_PATTERN, "").replace(UNSAFE_PATH_CHARS, "_");
     sanitized = sanitized.trim().replace(/^\.+|\.+$/g, "");
     if (!sanitized) {
       sanitized = "image";
@@ -80,7 +85,8 @@ var PasteImageAsWebPPlugin = class extends import_obsidian.Plugin {
    * Validates and sanitizes a folder path
    */
   sanitizeFolderPath(path) {
-    let sanitized = path.replace(/\.\./g, "").replace(/\0/g, "").replace(/^[\/\\]+/, "").replace(/[\/\\]+$/, "");
+    let sanitized = removeControlCharacters(path);
+    sanitized = sanitized.replace(/\.\./g, "").replace(/^[/\\]+/, "").replace(/[/\\]+$/, "");
     sanitized = sanitized.replace(/\\/g, "/");
     sanitized = sanitized.replace(UNSAFE_PATH_CHARS, "_");
     if (!sanitized) {
@@ -183,7 +189,7 @@ var PasteImageAsWebPPlugin = class extends import_obsidian.Plugin {
               this.settings.webpQuality
             );
           } catch (error) {
-            reject(error);
+            reject(error instanceof Error ? error : new Error("Unknown error during conversion"));
           }
         };
         img.onerror = () => {
@@ -278,13 +284,13 @@ var PasteImageAsWebPSettingTab = class extends import_obsidian.PluginSettingTab 
       this.display();
     }));
     if (this.plugin.settings.filenameFormat === "fixed") {
-      new import_obsidian.Setting(containerEl).setName("Fixed filename").setDesc("Filename to use (without extension)").addText((text) => text.setPlaceholder("image").setValue(this.plugin.settings.fixedFilename).onChange(async (value) => {
+      new import_obsidian.Setting(containerEl).setName("Fixed filename").setDesc("Filename to use (without extension)").addText((text) => text.setPlaceholder("Image").setValue(this.plugin.settings.fixedFilename).onChange(async (value) => {
         this.plugin.settings.fixedFilename = value || "image";
         await this.plugin.saveSettings();
       }));
     }
     if (this.plugin.settings.filenameFormat === "timestamp") {
-      new import_obsidian.Setting(containerEl).setName("Timestamp format").setDesc("Format: YYYY (year), MM (month), DD (day), HH (hour), mm (minute), ss (second)").addText((text) => text.setPlaceholder("YYYYMMDDHHmmss").setValue(this.plugin.settings.timestampFormat).onChange(async (value) => {
+      new import_obsidian.Setting(containerEl).setName("Timestamp format").setDesc("Format: YYYY (Year), MM (Month), DD (Day), HH (Hour), mm (Minute), ss (Second)").addText((text) => text.setPlaceholder("Yyyymmddhhmmss").setValue(this.plugin.settings.timestampFormat).onChange(async (value) => {
         this.plugin.settings.timestampFormat = value || "YYYYMMDDHHmmss";
         await this.plugin.saveSettings();
       }));
@@ -294,13 +300,13 @@ var PasteImageAsWebPSettingTab = class extends import_obsidian.PluginSettingTab 
         cls: "setting-item-description"
       });
     }
-    new import_obsidian.Setting(containerEl).setName("Image folder location").setDesc("Where to create the image folder").addDropdown((dropdown) => dropdown.addOption("current-folder", "Same folder as current note").addOption("vault-root", "Vault root folder").addOption("custom-path", "Custom path").setValue(this.plugin.settings.imageFolderLocation).onChange(async (value) => {
+    new import_obsidian.Setting(containerEl).setName("Image folder location").setDesc("Where to create the image folder").addDropdown((dropdown) => dropdown.addOption("current-folder", "Same folder as current note").addOption("vault-root", "Vault root").addOption("custom-path", "Custom path").setValue(this.plugin.settings.imageFolderLocation).onChange(async (value) => {
       this.plugin.settings.imageFolderLocation = value;
       await this.plugin.saveSettings();
       this.display();
     }));
     if (this.plugin.settings.imageFolderLocation === "custom-path") {
-      new import_obsidian.Setting(containerEl).setName("Custom folder path").setDesc('Full path to the folder (e.g., "project/images" or "resources/attachments")').addText((text) => text.setPlaceholder("project/images").setValue(this.plugin.settings.customFolderPath).onChange(async (value) => {
+      new import_obsidian.Setting(containerEl).setName("Custom folder path").setDesc('Full path to the folder (e.g., "project/images" or "resources/attachments")').addText((text) => text.setPlaceholder("Project/images").setValue(this.plugin.settings.customFolderPath).onChange(async (value) => {
         this.plugin.settings.customFolderPath = value || "project/images";
         await this.plugin.saveSettings();
       }));
@@ -311,16 +317,16 @@ var PasteImageAsWebPSettingTab = class extends import_obsidian.PluginSettingTab 
     }
     if (this.plugin.settings.imageFolderLocation !== "custom-path") {
       const folderDescription = this.plugin.settings.imageFolderLocation === "current-folder" ? "Folder name (created in the same directory as the current note)" : "Folder path (relative to vault root)";
-      new import_obsidian.Setting(containerEl).setName("Image folder name").setDesc(folderDescription).addText((text) => text.setPlaceholder("attachments").setValue(this.plugin.settings.imageFolder).onChange(async (value) => {
+      new import_obsidian.Setting(containerEl).setName("Image folder name").setDesc(folderDescription).addText((text) => text.setPlaceholder("Attachments").setValue(this.plugin.settings.imageFolder).onChange(async (value) => {
         this.plugin.settings.imageFolder = value || "attachments";
         await this.plugin.saveSettings();
       }));
     }
-    new import_obsidian.Setting(containerEl).setName("WebP quality").setDesc("Image quality (0.0 - 1.0, higher is better quality)").addSlider((slider) => slider.setLimits(0.1, 1, 0.05).setValue(this.plugin.settings.webpQuality).setDynamicTooltip().onChange(async (value) => {
+    new import_obsidian.Setting(containerEl).setName("Image quality (webp)").setDesc("Image quality (0.0 - 1.0, higher is better quality)").addSlider((slider) => slider.setLimits(0.1, 1, 0.05).setValue(this.plugin.settings.webpQuality).setDynamicTooltip().onChange(async (value) => {
       this.plugin.settings.webpQuality = value;
       await this.plugin.saveSettings();
     }));
-    new import_obsidian.Setting(containerEl).setName("Security settings").setHeading();
+    new import_obsidian.Setting(containerEl).setName("Security").setHeading();
     new import_obsidian.Setting(containerEl).setName("Maximum image size").setDesc("Maximum total pixels (width \xD7 height). Default: 16777216 (4096\xD74096)").addText((text) => text.setPlaceholder("16777216").setValue(this.plugin.settings.maxImageSize.toString()).onChange(async (value) => {
       const numValue = parseInt(value);
       if (!isNaN(numValue) && numValue > 0) {
@@ -328,7 +334,7 @@ var PasteImageAsWebPSettingTab = class extends import_obsidian.PluginSettingTab 
         await this.plugin.saveSettings();
       }
     }));
-    new import_obsidian.Setting(containerEl).setName("Maximum file size (MB)").setDesc("Maximum file size in megabytes. Default: 10MB").addText((text) => text.setPlaceholder("10").setValue(this.plugin.settings.maxFileSizeMB.toString()).onChange(async (value) => {
+    new import_obsidian.Setting(containerEl).setName("Maximum file size (mb)").setDesc("Maximum file size in megabytes. default: 10mb").addText((text) => text.setPlaceholder("10").setValue(this.plugin.settings.maxFileSizeMB.toString()).onChange(async (value) => {
       const numValue = parseFloat(value);
       if (!isNaN(numValue) && numValue > 0) {
         this.plugin.settings.maxFileSizeMB = numValue;
@@ -336,7 +342,7 @@ var PasteImageAsWebPSettingTab = class extends import_obsidian.PluginSettingTab 
       }
     }));
     containerEl.createEl("div", {
-      text: "Security settings help prevent malicious images from consuming excessive resources.",
+      text: "Helps prevent malicious images from consuming excessive resources.",
       cls: "setting-item-description"
     });
   }
