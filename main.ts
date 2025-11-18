@@ -65,7 +65,7 @@ export default class PasteImageAsWebPPlugin extends Plugin {
 		let sanitized = filename
 			.replace(PATH_TRAVERSAL_PATTERN, '')
 			.replace(UNSAFE_PATH_CHARS, '_')
-			.replace(/\0/g, ''); // Remove null bytes
+			.replace(/\u0000/g, ''); // Remove null bytes
 
 		// Trim whitespace and dots from edges
 		sanitized = sanitized.trim().replace(/^\.+|\.+$/g, '');
@@ -90,9 +90,9 @@ export default class PasteImageAsWebPPlugin extends Plugin {
 		// Remove path traversal attempts
 		let sanitized = path
 			.replace(/\.\./g, '')
-			.replace(/\0/g, '') // Remove null bytes
-			.replace(/^[\/\\]+/, '') // Remove leading slashes
-			.replace(/[\/\\]+$/, ''); // Remove trailing slashes
+			.replace(/\u0000/g, '') // Remove null bytes
+			.replace(/^[/\\]+/, '') // Remove leading slashes
+			.replace(/[/\\]+$/, ''); // Remove trailing slashes
 
 		// Normalize slashes to forward slashes
 		sanitized = sanitized.replace(/\\/g, '/');
@@ -243,7 +243,7 @@ export default class PasteImageAsWebPPlugin extends Plugin {
 							this.settings.webpQuality
 						);
 					} catch (error) {
-						reject(error);
+						reject(error instanceof Error ? error : new Error('Unknown error during conversion'));
 					}
 				};
 
@@ -507,14 +507,14 @@ class PasteImageAsWebPSettingTab extends PluginSettingTab {
 					await this.plugin.saveSettings();
 				}));
 
-		// Security settings header
+		// Security header
 		new Setting(containerEl)
-			.setName('Security settings')
+			.setName('Security')
 			.setHeading();
 
 		new Setting(containerEl)
 			.setName('Maximum image size')
-			.setDesc('Maximum total pixels (width × height). Default: 16777216 (4096×4096)')
+			.setDesc('Maximum total pixels (width × height), default: 16777216 (4096×4096)')
 			.addText(text => text
 				.setPlaceholder('16777216')
 				.setValue(this.plugin.settings.maxImageSize.toString())
@@ -526,10 +526,9 @@ class PasteImageAsWebPSettingTab extends PluginSettingTab {
 					}
 				}));
 
-		// 最大ファイルサイズ
 		new Setting(containerEl)
 			.setName('Maximum file size (MB)')
-			.setDesc('Maximum file size in megabytes. Default: 10MB')
+			.setDesc('Maximum file size in megabytes, default: 10MB')
 			.addText(text => text
 				.setPlaceholder('10')
 				.setValue(this.plugin.settings.maxFileSizeMB.toString())
@@ -543,7 +542,7 @@ class PasteImageAsWebPSettingTab extends PluginSettingTab {
 
 		// Security notice
 		containerEl.createEl('div', {
-			text: 'Security settings help prevent malicious images from consuming excessive resources.',
+			text: 'Helps prevent malicious images from consuming excessive resources.',
 			cls: 'setting-item-description'
 		});
 	}
