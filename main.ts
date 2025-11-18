@@ -408,8 +408,8 @@ class PasteImageAsWebPSettingTab extends PluginSettingTab {
 			.setName('Filename format')
 			.setDesc('Choose how to name the saved images')
 			.addDropdown(dropdown => dropdown
-				.addOption('fixed', 'Fixed name')
-				.addOption('timestamp', 'Timestamp')
+				.addOption('fixed', 'fixed name')
+				.addOption('timestamp', 'timestamp')
 				.setValue(this.plugin.settings.filenameFormat)
 				.onChange(async (value: 'fixed' | 'timestamp') => {
 					this.plugin.settings.filenameFormat = value;
@@ -457,9 +457,9 @@ class PasteImageAsWebPSettingTab extends PluginSettingTab {
 			.setName('Image folder location')
 			.setDesc('Where to create the image folder')
 			.addDropdown(dropdown => dropdown
-				.addOption('current-folder', 'Same folder as current note')
-				.addOption('vault-root', 'Vault root')
-				.addOption('custom-path', 'Custom path')
+				.addOption('current-folder', 'same folder as current note')
+				.addOption('vault-root', 'vault root')
+				.addOption('custom-path', 'custom path')
 				.setValue(this.plugin.settings.imageFolderLocation)
 				.onChange(async (value: 'current-folder' | 'vault-root' | 'custom-path') => {
 					this.plugin.settings.imageFolderLocation = value;
@@ -507,7 +507,7 @@ class PasteImageAsWebPSettingTab extends PluginSettingTab {
 
 		// WebP品質
 		new Setting(containerEl)
-			.setName('WebP quality')
+			.setName('Image quality (WebP)')
 			.setDesc('Image quality (0.0 - 1.0, higher is better quality)')
 			.addSlider(slider => slider
 				.setLimits(0.1, 1.0, 0.05)
