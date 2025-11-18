@@ -34,7 +34,8 @@ const PATH_TRAVERSAL_PATTERN = /\.\.|[\\/]/g;
  * Removes control characters from a string
  */
 function removeControlCharacters(str: string): string {
-	return str.replace(/[\u0000-\u001F\u007F-\u009F]/g, '');
+	const pattern = new RegExp('[\\u0000-\\u001F\\u007F-\\u009F]', 'g');
+	return str.replace(pattern, '');
 }
 
 export default class PasteImageAsWebPPlugin extends Plugin {
@@ -408,8 +409,8 @@ class PasteImageAsWebPSettingTab extends PluginSettingTab {
 			.setName('Filename format')
 			.setDesc('Choose how to name the saved images')
 			.addDropdown(dropdown => dropdown
-				.addOption('fixed', 'fixed name')
-				.addOption('timestamp', 'timestamp')
+				.addOption('fixed', 'Fixed name')
+				.addOption('timestamp', 'Timestamp')
 				.setValue(this.plugin.settings.filenameFormat)
 				.onChange(async (value: 'fixed' | 'timestamp') => {
 					this.plugin.settings.filenameFormat = value;
@@ -423,7 +424,7 @@ class PasteImageAsWebPSettingTab extends PluginSettingTab {
 				.setName('Fixed filename')
 				.setDesc('Filename to use (without extension)')
 				.addText(text => text
-					.setPlaceholder('image')
+					.setPlaceholder('Image')
 					.setValue(this.plugin.settings.fixedFilename)
 					.onChange(async (value) => {
 						this.plugin.settings.fixedFilename = value || 'image';
@@ -457,9 +458,9 @@ class PasteImageAsWebPSettingTab extends PluginSettingTab {
 			.setName('Image folder location')
 			.setDesc('Where to create the image folder')
 			.addDropdown(dropdown => dropdown
-				.addOption('current-folder', 'same folder as current note')
-				.addOption('vault-root', 'vault root')
-				.addOption('custom-path', 'custom path')
+				.addOption('current-folder', 'Same folder as current note')
+				.addOption('vault-root', 'Vault root')
+				.addOption('custom-path', 'Custom path')
 				.setValue(this.plugin.settings.imageFolderLocation)
 				.onChange(async (value: 'current-folder' | 'vault-root' | 'custom-path') => {
 					this.plugin.settings.imageFolderLocation = value;
@@ -473,7 +474,7 @@ class PasteImageAsWebPSettingTab extends PluginSettingTab {
 				.setName('Custom folder path')
 				.setDesc('Full path to the folder (e.g., "project/images" or "resources/attachments")')
 				.addText(text => text
-					.setPlaceholder('project/images')
+					.setPlaceholder('Project/images')
 					.setValue(this.plugin.settings.customFolderPath)
 					.onChange(async (value) => {
 						this.plugin.settings.customFolderPath = value || 'project/images';
@@ -497,7 +498,7 @@ class PasteImageAsWebPSettingTab extends PluginSettingTab {
 				.setName('Image folder name')
 				.setDesc(folderDescription)
 				.addText(text => text
-					.setPlaceholder('attachments')
+					.setPlaceholder('Attachments')
 					.setValue(this.plugin.settings.imageFolder)
 					.onChange(async (value) => {
 						this.plugin.settings.imageFolder = value || 'attachments';
@@ -539,7 +540,7 @@ class PasteImageAsWebPSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName('Maximum file size (MB)')
-			.setDesc('Maximum file size in megabytes, default: 10MB')
+			.setDesc('Maximum file size in megabytes. Default: 10MB')
 			.addText(text => text
 				.setPlaceholder('10')
 				.setValue(this.plugin.settings.maxFileSizeMB.toString())
