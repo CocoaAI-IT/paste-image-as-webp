@@ -526,7 +526,7 @@ class PasteImageAsWebPSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName('Maximum image size')
-			.setDesc('Maximum total pixels (width × height), default: 16777216 (4096×4096)')
+			.setDesc('Maximum total pixels (width × height). Default: 16777216 (4096×4096)')
 			.addText(text => text
 				.setPlaceholder('16777216')
 				.setValue(this.plugin.settings.maxImageSize.toString())
