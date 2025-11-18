@@ -27,8 +27,15 @@ const DEFAULT_SETTINGS: PasteImageAsWebPSettings = {
 // Security constants
 const MAX_FILENAME_LENGTH = 255;
 const MAX_DUPLICATE_ATTEMPTS = 1000;
-const UNSAFE_PATH_CHARS = /[<>:"|?*\u0000-\u001f]/g;
+const UNSAFE_PATH_CHARS = /[<>:"|?*]/g;
 const PATH_TRAVERSAL_PATTERN = /\.\.|[\\/]/g;
+
+/**
+ * Removes control characters from a string
+ */
+function removeControlCharacters(str: string): string {
+	return str.replace(/[\u0000-\u001F\u007F-\u009F]/g, '');
+}
 
 export default class PasteImageAsWebPPlugin extends Plugin {
 	settings: PasteImageAsWebPSettings;
@@ -61,11 +68,13 @@ export default class PasteImageAsWebPPlugin extends Plugin {
 	 * Sanitizes a filename to remove dangerous characters
 	 */
 	private sanitizeFilename(filename: string): string {
+		// Remove control characters
+		let sanitized = removeControlCharacters(filename);
+
 		// Remove path traversal attempts and unsafe characters
-		let sanitized = filename
+		sanitized = sanitized
 			.replace(PATH_TRAVERSAL_PATTERN, '')
-			.replace(UNSAFE_PATH_CHARS, '_')
-			.replace(/\u0000/g, ''); // Remove null bytes
+			.replace(UNSAFE_PATH_CHARS, '_');
 
 		// Trim whitespace and dots from edges
 		sanitized = sanitized.trim().replace(/^\.+|\.+$/g, '');
@@ -87,10 +96,12 @@ export default class PasteImageAsWebPPlugin extends Plugin {
 	 * Validates and sanitizes a folder path
 	 */
 	private sanitizeFolderPath(path: string): string {
+		// Remove control characters
+		let sanitized = removeControlCharacters(path);
+
 		// Remove path traversal attempts
-		let sanitized = path
+		sanitized = sanitized
 			.replace(/\.\./g, '')
-			.replace(/\u0000/g, '') // Remove null bytes
 			.replace(/^[/\\]+/, '') // Remove leading slashes
 			.replace(/[/\\]+$/, ''); // Remove trailing slashes
 
@@ -397,8 +408,8 @@ class PasteImageAsWebPSettingTab extends PluginSettingTab {
 			.setName('Filename format')
 			.setDesc('Choose how to name the saved images')
 			.addDropdown(dropdown => dropdown
-				.addOption('fixed', 'Fixed name')
-				.addOption('timestamp', 'Timestamp')
+				.addOption('fixed', 'fixed name')
+				.addOption('timestamp', 'timestamp')
 				.setValue(this.plugin.settings.filenameFormat)
 				.onChange(async (value: 'fixed' | 'timestamp') => {
 					this.plugin.settings.filenameFormat = value;
@@ -446,9 +457,9 @@ class PasteImageAsWebPSettingTab extends PluginSettingTab {
 			.setName('Image folder location')
 			.setDesc('Where to create the image folder')
 			.addDropdown(dropdown => dropdown
-				.addOption('current-folder', 'Same folder as current note')
-				.addOption('vault-root', 'Vault root folder')
-				.addOption('custom-path', 'Custom path')
+				.addOption('current-folder', 'same folder as current note')
+				.addOption('vault-root', 'vault root')
+				.addOption('custom-path', 'custom path')
 				.setValue(this.plugin.settings.imageFolderLocation)
 				.onChange(async (value: 'current-folder' | 'vault-root' | 'custom-path') => {
 					this.plugin.settings.imageFolderLocation = value;
@@ -496,7 +507,7 @@ class PasteImageAsWebPSettingTab extends PluginSettingTab {
 
 		// WebP品質
 		new Setting(containerEl)
-			.setName('WebP quality')
+			.setName('Image quality (WebP)')
 			.setDesc('Image quality (0.0 - 1.0, higher is better quality)')
 			.addSlider(slider => slider
 				.setLimits(0.1, 1.0, 0.05)
