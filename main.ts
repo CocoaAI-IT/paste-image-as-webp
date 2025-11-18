@@ -34,7 +34,6 @@ const PATH_TRAVERSAL_PATTERN = /\.\.|[\\/]/g;
  * Removes control characters from a string
  */
 function removeControlCharacters(str: string): string {
-	// eslint-disable-next-line no-control-regex
 	const pattern = new RegExp('[\\u0000-\\u001F\\u007F-\\u009F]', 'g');
 	return str.replace(pattern, '');
 }
