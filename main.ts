@@ -437,7 +437,7 @@ class PasteImageAsWebPSettingTab extends PluginSettingTab {
 		if (this.plugin.settings.filenameFormat === 'timestamp') {
 			new Setting(containerEl)
 				.setName('Timestamp format')
-				.setDesc('Format: YYYY (year), MM (month), DD (day), HH (hour), mm (minute), ss (second)')
+				.setDesc('Format: YYYY (Year), MM (Month), DD (Day), HH (Hour), mm (Minute), ss (Second)')
 				.addText(text => text
 					.setPlaceholder('Yyyymmddhhmmss')
 					.setValue(this.plugin.settings.timestampFormat)
