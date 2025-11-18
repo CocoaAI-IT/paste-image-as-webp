@@ -47,8 +47,10 @@ var MAX_DUPLICATE_ATTEMPTS = 1e3;
 var UNSAFE_PATH_CHARS = /[<>:"|?*]/g;
 var PATH_TRAVERSAL_PATTERN = /\.\.|[\\/]/g;
 function removeControlCharacters(str) {
-  const pattern = new RegExp("[\\u0000-\\u001F\\u007F-\\u009F]", "g");
-  return str.replace(pattern, "");
+  return str.split("").filter((char) => {
+    const code = char.charCodeAt(0);
+    return !(code <= 31 || code >= 127 && code <= 159);
+  }).join("");
 }
 var PasteImageAsWebPPlugin = class extends import_obsidian.Plugin {
   async onload() {
@@ -290,7 +292,7 @@ var PasteImageAsWebPSettingTab = class extends import_obsidian.PluginSettingTab 
       }));
     }
     if (this.plugin.settings.filenameFormat === "timestamp") {
-      new import_obsidian.Setting(containerEl).setName("Timestamp format").setDesc("Format: YYYY (Year), MM (Month), DD (Day), HH (Hour), mm (Minute), ss (Second)").addText((text) => text.setPlaceholder("Yyyymmddhhmmss").setValue(this.plugin.settings.timestampFormat).onChange(async (value) => {
+      new import_obsidian.Setting(containerEl).setName("Timestamp format").setDesc("Format: YYYY (year), MM (month), DD (day), HH (hour), mm (minute), ss (second)").addText((text) => text.setPlaceholder("YYYYMMDDHHmmss").setValue(this.plugin.settings.timestampFormat).onChange(async (value) => {
         this.plugin.settings.timestampFormat = value || "YYYYMMDDHHmmss";
         await this.plugin.saveSettings();
       }));
@@ -322,7 +324,7 @@ var PasteImageAsWebPSettingTab = class extends import_obsidian.PluginSettingTab 
         await this.plugin.saveSettings();
       }));
     }
-    new import_obsidian.Setting(containerEl).setName("Image quality (webp)").setDesc("Image quality (0.0 - 1.0, higher is better quality)").addSlider((slider) => slider.setLimits(0.1, 1, 0.05).setValue(this.plugin.settings.webpQuality).setDynamicTooltip().onChange(async (value) => {
+    new import_obsidian.Setting(containerEl).setName("Image quality (WebP)").setDesc("Image quality (0.0 - 1.0, higher is better quality)").addSlider((slider) => slider.setLimits(0.1, 1, 0.05).setValue(this.plugin.settings.webpQuality).setDynamicTooltip().onChange(async (value) => {
       this.plugin.settings.webpQuality = value;
       await this.plugin.saveSettings();
     }));
@@ -334,7 +336,7 @@ var PasteImageAsWebPSettingTab = class extends import_obsidian.PluginSettingTab 
         await this.plugin.saveSettings();
       }
     }));
-    new import_obsidian.Setting(containerEl).setName("Maximum file size (mb)").setDesc("Maximum file size in megabytes. default: 10mb").addText((text) => text.setPlaceholder("10").setValue(this.plugin.settings.maxFileSizeMB.toString()).onChange(async (value) => {
+    new import_obsidian.Setting(containerEl).setName("Maximum file size (MB)").setDesc("Maximum file size in megabytes. Default: 10 MB").addText((text) => text.setPlaceholder("10").setValue(this.plugin.settings.maxFileSizeMB.toString()).onChange(async (value) => {
       const numValue = parseFloat(value);
       if (!isNaN(numValue) && numValue > 0) {
         this.plugin.settings.maxFileSizeMB = numValue;
