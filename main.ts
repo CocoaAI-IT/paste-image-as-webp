@@ -34,7 +34,6 @@ const PATH_TRAVERSAL_PATTERN = /\.\.|[\\/]/g;
  * Removes control characters from a string
  */
 function removeControlCharacters(str: string): string {
-	// Filter out control characters (ASCII 0-31 and 127-159) to prevent security issues
 	return str.split('').filter(char => {
 		const code = char.charCodeAt(0);
 		return !(code <= 31 || (code >= 127 && code <= 159));
