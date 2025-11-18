@@ -426,7 +426,7 @@ class PasteImageAsWebPSettingTab extends PluginSettingTab {
 				.setName('Fixed filename')
 				.setDesc('Filename to use (without extension)')
 				.addText(text => text
-					.setPlaceholder('Image')
+					.setPlaceholder('image')
 					.setValue(this.plugin.settings.fixedFilename)
 					.onChange(async (value) => {
 						this.plugin.settings.fixedFilename = value || 'image';
@@ -476,7 +476,7 @@ class PasteImageAsWebPSettingTab extends PluginSettingTab {
 				.setName('Custom folder path')
 				.setDesc('Full path to the folder (e.g., "project/images" or "resources/attachments")')
 				.addText(text => text
-					.setPlaceholder('Project/images')
+					.setPlaceholder('project/images')
 					.setValue(this.plugin.settings.customFolderPath)
 					.onChange(async (value) => {
 						this.plugin.settings.customFolderPath = value || 'project/images';
@@ -500,7 +500,7 @@ class PasteImageAsWebPSettingTab extends PluginSettingTab {
 				.setName('Image folder name')
 				.setDesc(folderDescription)
 				.addText(text => text
-					.setPlaceholder('Attachments')
+					.setPlaceholder('attachments')
 					.setValue(this.plugin.settings.imageFolder)
 					.onChange(async (value) => {
 						this.plugin.settings.imageFolder = value || 'attachments';
