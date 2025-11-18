@@ -290,7 +290,7 @@ var PasteImageAsWebPSettingTab = class extends import_obsidian.PluginSettingTab 
       }));
     }
     if (this.plugin.settings.filenameFormat === "timestamp") {
-      new import_obsidian.Setting(containerEl).setName("Timestamp format").setDesc("Format: YYYY (Year), MM (Month), DD (Day), HH (Hour), mm (Minute), ss (Second)").addText((text) => text.setPlaceholder("YYYYMMDDHHmmss").setValue(this.plugin.settings.timestampFormat).onChange(async (value) => {
+      new import_obsidian.Setting(containerEl).setName("Timestamp format").setDesc("Format: YYYY (Year), MM (Month), DD (Day), HH (Hour), mm (Minute), ss (Second)").addText((text) => text.setPlaceholder("Yyyymmddhhmmss").setValue(this.plugin.settings.timestampFormat).onChange(async (value) => {
         this.plugin.settings.timestampFormat = value || "YYYYMMDDHHmmss";
         await this.plugin.saveSettings();
       }));
@@ -322,7 +322,7 @@ var PasteImageAsWebPSettingTab = class extends import_obsidian.PluginSettingTab 
         await this.plugin.saveSettings();
       }));
     }
-    new import_obsidian.Setting(containerEl).setName("Image quality (WebP)").setDesc("Image quality (0.0 - 1.0, higher is better quality)").addSlider((slider) => slider.setLimits(0.1, 1, 0.05).setValue(this.plugin.settings.webpQuality).setDynamicTooltip().onChange(async (value) => {
+    new import_obsidian.Setting(containerEl).setName("Image quality (webp)").setDesc("Image quality (0.0 - 1.0, higher is better quality)").addSlider((slider) => slider.setLimits(0.1, 1, 0.05).setValue(this.plugin.settings.webpQuality).setDynamicTooltip().onChange(async (value) => {
       this.plugin.settings.webpQuality = value;
       await this.plugin.saveSettings();
     }));
@@ -334,7 +334,7 @@ var PasteImageAsWebPSettingTab = class extends import_obsidian.PluginSettingTab 
         await this.plugin.saveSettings();
       }
     }));
-    new import_obsidian.Setting(containerEl).setName("Maximum file size (MB)").setDesc("Maximum file size in megabytes. Default: 10MB").addText((text) => text.setPlaceholder("10").setValue(this.plugin.settings.maxFileSizeMB.toString()).onChange(async (value) => {
+    new import_obsidian.Setting(containerEl).setName("Maximum file size (mb)").setDesc("Maximum file size in megabytes. default: 10mb").addText((text) => text.setPlaceholder("10").setValue(this.plugin.settings.maxFileSizeMB.toString()).onChange(async (value) => {
       const numValue = parseFloat(value);
       if (!isNaN(numValue) && numValue > 0) {
         this.plugin.settings.maxFileSizeMB = numValue;
