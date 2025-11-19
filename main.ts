@@ -211,8 +211,8 @@ export default class PasteImageAsWebPPlugin extends Plugin {
 
 		// Allow specific known error messages
 		if (errorMsg.includes('exceeds') ||
-		    errorMsg.includes('dimensions') ||
-		    errorMsg.includes('Invalid')) {
+			errorMsg.includes('dimensions') ||
+			errorMsg.includes('Invalid')) {
 			return errorMsg;
 		}
 
@@ -651,6 +651,12 @@ class ConfirmResetModal extends Modal {
 			this.onConfirm(true);
 		});
 	}
+
+	onClose() {
+		const {contentEl} = this;
+		contentEl.empty();
+	}
+}
 
 	onClose() {
 		const {contentEl} = this;
