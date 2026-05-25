@@ -63,12 +63,14 @@ This plugin does **not** make any network requests and does **not** read or writ
 
 ## Development
 
+This project uses [pnpm](https://pnpm.io) as its package manager. `npm install` is blocked by a `preinstall` guard.
+
 ```bash
 git clone https://github.com/CocoaAI-IT/paste-image-as-webp.git
 cd paste-image-as-webp
-npm install
-npm run dev      # watch mode
-npm run build    # production build
+pnpm install
+pnpm dev      # watch mode
+pnpm build    # production build
 ```
 
 ## License

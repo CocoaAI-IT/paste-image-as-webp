@@ -4,9 +4,14 @@
   "description": "Obsidian plugin to paste images as WebP format",
   "main": "main.js",
   "scripts": {
+    "preinstall": "npx only-allow pnpm",
     "dev": "node esbuild.config.mjs",
     "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
     "version": "node version-bump.mjs && git add manifest.json versions.json"
+  },
+  "packageManager": "pnpm@10.33.2",
+  "engines": {
+    "pnpm": ">=10"
   },
   "keywords": [
     "obsidian",
