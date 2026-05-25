@@ -286,7 +286,7 @@ var PasteImageAsWebPSettingTab = class extends import_obsidian.PluginSettingTab 
       this.display();
     }));
     if (this.plugin.settings.filenameFormat === "fixed") {
-      new import_obsidian.Setting(containerEl).setName("Fixed filename").setDesc("Filename to use (without extension)").addText((text) => text.setPlaceholder("Image").setValue(this.plugin.settings.fixedFilename).onChange(async (value) => {
+      new import_obsidian.Setting(containerEl).setName("Fixed filename").setDesc("Filename to use (without extension)").addText((text) => text.setPlaceholder("image").setValue(this.plugin.settings.fixedFilename).onChange(async (value) => {
         this.plugin.settings.fixedFilename = value || "image";
         await this.plugin.saveSettings();
       }));
@@ -308,7 +308,7 @@ var PasteImageAsWebPSettingTab = class extends import_obsidian.PluginSettingTab 
       this.display();
     }));
     if (this.plugin.settings.imageFolderLocation === "custom-path") {
-      new import_obsidian.Setting(containerEl).setName("Custom folder path").setDesc('Full path to the folder (e.g., "project/images" or "resources/attachments")').addText((text) => text.setPlaceholder("Project/images").setValue(this.plugin.settings.customFolderPath).onChange(async (value) => {
+      new import_obsidian.Setting(containerEl).setName("Custom folder path").setDesc('Full path to the folder (e.g., "project/images" or "resources/attachments")').addText((text) => text.setPlaceholder("project/images").setValue(this.plugin.settings.customFolderPath).onChange(async (value) => {
         this.plugin.settings.customFolderPath = value || "project/images";
         await this.plugin.saveSettings();
       }));
@@ -319,7 +319,7 @@ var PasteImageAsWebPSettingTab = class extends import_obsidian.PluginSettingTab 
     }
     if (this.plugin.settings.imageFolderLocation !== "custom-path") {
       const folderDescription = this.plugin.settings.imageFolderLocation === "current-folder" ? "Folder name (created in the same directory as the current note)" : "Folder path (relative to vault root)";
-      new import_obsidian.Setting(containerEl).setName("Image folder name").setDesc(folderDescription).addText((text) => text.setPlaceholder("Attachments").setValue(this.plugin.settings.imageFolder).onChange(async (value) => {
+      new import_obsidian.Setting(containerEl).setName("Image folder name").setDesc(folderDescription).addText((text) => text.setPlaceholder("attachments").setValue(this.plugin.settings.imageFolder).onChange(async (value) => {
         this.plugin.settings.imageFolder = value || "attachments";
         await this.plugin.saveSettings();
       }));
@@ -388,13 +388,7 @@ var ConfirmResetModal = class extends import_obsidian.Modal {
     contentEl.createEl("p", {
       text: "This will reset all settings to their default values. This action cannot be undone."
     });
-    const buttonContainer = contentEl.createDiv({ cls: "modal-button-container" });
-    buttonContainer.setCssProps({
-      "display": "flex",
-      "justify-content": "flex-end",
-      "gap": "10px",
-      "margin-top": "20px"
-    });
+    const buttonContainer = contentEl.createDiv({ cls: "paste-webp-modal-buttons" });
     const cancelButton = buttonContainer.createEl("button", { text: "Cancel" });
     cancelButton.addEventListener("click", () => {
       this.close();

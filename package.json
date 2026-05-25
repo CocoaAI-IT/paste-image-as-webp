@@ -1,6 +1,6 @@
 {
   "name": "obsidian-paste-image-as-webp",
-  "version": "1.0.1",
+  "version": "1.0.4",
   "description": "Obsidian plugin to paste images as WebP format",
   "main": "main.js",
   "scripts": {

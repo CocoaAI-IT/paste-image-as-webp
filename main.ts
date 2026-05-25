@@ -625,23 +625,14 @@ class ConfirmResetModal extends Modal {
 			text: 'This will reset all settings to their default values. This action cannot be undone.'
 		});
 
-		// Button container
-		const buttonContainer = contentEl.createDiv({cls: 'modal-button-container'});
-		buttonContainer.setCssProps({
-			'display': 'flex',
-			'justify-content': 'flex-end',
-			'gap': '10px',
-			'margin-top': '20px'
-		});
+		const buttonContainer = contentEl.createDiv({cls: 'paste-webp-modal-buttons'});
 
-		// Cancel button
 		const cancelButton = buttonContainer.createEl('button', {text: 'Cancel'});
 		cancelButton.addEventListener('click', () => {
 			this.close();
 			this.onConfirm(false);
 		});
 
-		// Reset button
 		const resetButton = buttonContainer.createEl('button', {
 			text: 'Reset to defaults',
 			cls: 'mod-warning'
@@ -651,12 +642,6 @@ class ConfirmResetModal extends Modal {
 			this.onConfirm(true);
 		});
 	}
-
-	onClose() {
-		const {contentEl} = this;
-		contentEl.empty();
-	}
-}
 
 	onClose() {
 		const {contentEl} = this;

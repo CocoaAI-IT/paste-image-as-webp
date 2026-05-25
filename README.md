@@ -1,162 +1,109 @@
-# Paste Image as WebP - Obsidian Plugin
+# Paste Image as WebP
 
-Automatically convert pasted images from the clipboard into WebP format when inserting them into Obsidian.  
-This plugin supports custom file names, WebP compression quality, save destinations, and automatic embedding in the editor.
+Convert images pasted from the clipboard into WebP format automatically when inserting them into your notes. Supports customizable file names, WebP compression quality, save destinations, and automatic embedding in the editor.
 
-Obsidian でクリップボードから画像をペーストする際に、自動的に WebP 形式に変換して保存するプラグインです。
+## Features
 
-## 機能
+- Automatically converts clipboard images to WebP on paste
+- Two filename modes:
+  - **Fixed name**: e.g. `image.webp`
+  - **Timestamp**: e.g. `20231116143025.webp`
+- Adjustable WebP quality (0.1–1.0)
+- Configurable save folder (vault root, same folder as current note, or a custom path)
+- Inserts `![[filename.webp]]` at the cursor automatically
+- Duplicate filenames are resolved by appending a numeric suffix
+- Built-in size limits to guard against malicious or oversized images
 
-- クリップボードから画像をペーストすると自動的に WebP 形式に変換
-- ファイル名を 2 つの形式から選択可能：
-  - **固定名**: `image.webp` などの固定ファイル名
-  - **タイムスタンプ**: `20231116143025.webp` などの日時ベース
-- WebP 品質の調整可能（0.1〜1.0）
-- 保存先フォルダのカスタマイズ
-- エディタに `![[ファイル名.webp]]` 形式で自動挿入
-- 同名ファイルが存在する場合は自動的に連番を追加
+## Installation
 
-## インストール
+### From the Community Plugins directory (recommended once approved)
 
-### Obsidian コミュニティプラグインから（推奨）
+1. Open **Settings → Community plugins → Browse**.
+2. Search for `Paste Image as WebP`.
+3. Click **Install**, then **Enable**.
 
-以下の手順で簡単にインストールできます：
+### Manual installation
 
-1. Obsidian の設定を開く
-2. 「コミュニティプラグイン」→「閲覧」をクリック
-3. 「Paste Image as WebP」を検索
-4. 「インストール」をクリック
-5. インストール後、「有効化」をクリック
+1. Download `main.js`, `manifest.json`, and `styles.css` from the [latest release](https://github.com/CocoaAI-IT/paste-image-as-webp/releases).
+2. Create a folder `paste-image-as-webp` inside `<your-vault>/.obsidian/plugins/`.
+3. Copy the three files into that folder.
+4. Restart Obsidian and enable the plugin from **Settings → Community plugins**.
 
-### GitHub リリースから手動インストール（現在利用可能）
+## Usage
 
-コミュニティプラグイン承認前に使用したい場合：
+1. Enable the plugin in **Settings → Community plugins**.
+2. Open the plugin settings to configure:
+   - **Filename format**: fixed name or timestamp.
+   - **Fixed filename** (when fixed mode is selected).
+   - **Timestamp format** (when timestamp mode is selected).
+   - **Image folder location**: vault root, same folder as the current note, or a custom path.
+   - **Image folder name** or **custom folder path**.
+   - **Image quality (WebP)**: 0.1–1.0.
+3. Copy an image to the clipboard and paste (Ctrl+V / Cmd+V) into the editor.
 
-1. [最新リリース](https://github.com/CocoaAI-IT/obsidian_exteition/releases)から以下をダウンロード:
+### Timestamp tokens
 
-   - `main.js`
-   - `manifest.json`
-   - `styles.css`
+`YYYY` year, `MM` month, `DD` day, `HH` hour (24h), `mm` minute, `ss` second.
 
-2. Obsidian のプラグインフォルダに`paste-image-as-webp`フォルダを作成:
+Examples:
 
-   - Windows: `%appdata%\Obsidian\<your-vault>\.obsidian\plugins\paste-image-as-webp\`
-   - macOS: `~/Library/Application Support/obsidian/<your-vault>/.obsidian/plugins/paste-image-as-webp/`
-   - Linux: `~/.config/obsidian/<your-vault>/.obsidian/plugins/paste-image-as-webp/`
+- `YYYYMMDDHHmmss` → `20231116143025.webp`
+- `YYYY-MM-DD_HHmmss` → `2023-11-16_143025.webp`
 
-3. ダウンロードした 3 つのファイルをこのフォルダに配置
+### Security settings
 
-4. Obsidian を再起動し、設定からプラグインを有効化
+- **Maximum image size**: maximum total pixels (width × height). Default `16777216` (4096 × 4096).
+- **Maximum file size (MB)**: maximum input file size in megabytes. Default `10`.
 
-### 開発者向け
+These limits prevent malicious images from consuming excessive resources during decoding. See [SECURITY.md](SECURITY.md) for details.
 
-プラグインの開発やカスタマイズをしたい場合：
+## Network and file system use
+
+This plugin does **not** make any network requests and does **not** read or write files outside the current vault. All image conversion is performed locally in the browser/Electron renderer using the `<canvas>` `toBlob('image/webp', …)` API.
+
+## Development
 
 ```bash
-# リポジトリをクローン
-git clone https://github.com/CocoaAI-IT/obsidian_exteition.git
-cd obsidian_exteition
-
-# 依存関係のインストール
+git clone https://github.com/CocoaAI-IT/paste-image-as-webp.git
+cd paste-image-as-webp
 npm install
-
-# 開発モード（ファイル変更を監視）
-npm run dev
-
-# プロダクションビルド
-npm run build
+npm run dev      # watch mode
+npm run build    # production build
 ```
 
-詳細は [COMMUNITY_PLUGIN_GUIDE.md](COMMUNITY_PLUGIN_GUIDE.md) を参照してください。
+## License
 
-## 使い方
+[MIT](LICENSE)
 
-1. Obsidian の設定から「コミュニティプラグイン」を開く
-2. 「Paste Image as WebP」プラグインを有効化
-3. プラグイン設定で以下をカスタマイズ：
-
-   - **ファイル名形式**: 固定名またはタイムスタンプ
-   - **固定ファイル名**: 固定名を選択した場合の名前（デフォルト: `image`）
-   - **タイムスタンプフォーマット**: タイムスタンプの形式（デフォルト: `YYYYMMDDHHmmss`）
-   - **保存先フォルダ**: 画像の保存先（デフォルト: `attachments`）
-   - **WebP 品質**: 画像品質（デフォルト: 0.85）
-
-4. クリップボードに画像をコピーして、Obsidian のエディタでペースト（Ctrl+V / Cmd+V）
-
-## 設定項目
-
-### ファイル名形式
-
-#### 固定名（Fixed name）
-
-- 同じファイル名で保存（例: `image.webp`）
-- 同名ファイルがある場合は自動的に `image-1.webp`, `image-2.webp` のように連番追加
-
-#### タイムスタンプ（Timestamp）
-
-- 日時をベースにしたファイル名
-- フォーマット指定可能：
-  - `YYYY`: 年（4 桁）
-  - `MM`: 月（2 桁）
-  - `DD`: 日（2 桁）
-  - `HH`: 時（2 桁、24 時間形式）
-  - `mm`: 分（2 桁）
-  - `ss`: 秒（2 桁）
-- デフォルト: `YYYYMMDDHHmmss` → `20231116143025.webp`
-- カスタム例:
-  - `YYYY-MM-DD_HHmmss` → `2023-11-16_143025.webp`
-  - `YYYYMMDD_HH-mm-ss` → `20231116_14-30-25.webp`
-
-### 保存先フォルダ
-
-- Vault ルートからの相対パス
-- フォルダが存在しない場合は自動作成
-
-### WebP 品質
-
-- 0.1〜1.0 の範囲で指定
-- 1.0 が最高品質（ファイルサイズ大）
-- 0.85 がバランスの取れたデフォルト値
-
-### セキュリティ設定
-
-- **最大画像サイズ**: 画像の最大ピクセル数（幅 × 高さ）
-  - デフォルト: 16,777,216（4096×4096）
-  - DoS 攻撃防止のため
-- **最大ファイルサイズ**: アップロード可能な最大ファイルサイズ（MB）
-  - デフォルト: 10MB
-  - リソース消費を制限
-
-詳細は [SECURITY.md](SECURITY.md) を参照してください。
-
-## WebP 形式のメリット
-
-- **ファイルサイズ削減**: PNG/JPEG と比較して 20-50%小さいファイルサイズ
-- **品質保持**: 高い圧縮率でも視覚的な品質を維持
-- **透過対応**: PNG のようなアルファチャンネル（透過）をサポート
-- **Vault の軽量化**: 多くの画像を使用する Vault のサイズを大幅に削減
-
-## トラブルシューティング
-
-### 画像がペーストされない
-
-- プラグインが有効になっているか確認
-- クリップボードに画像データが含まれているか確認
-- コンソール（Ctrl+Shift+I）でエラーを確認
-
-### 保存先フォルダが見つからない
-
-- 設定で指定したフォルダパスが正しいか確認
-- プラグインは自動的にフォルダを作成しますが、親フォルダが存在する必要があります
-
-## ライセンス
-
-MIT License
-
-## 開発者
+## Author
 
 CocoaAI-IT
 
-## 貢献
+---
 
-バグ報告や機能要望は GitHub Issues でお願いします。
+## 日本語
+
+クリップボードからペーストした画像を自動的に WebP 形式に変換して Obsidian の Vault に保存するプラグインです。ファイル名・品質・保存先をカスタマイズでき、エディタには `![[ファイル名.webp]]` 形式で自動挿入されます。
+
+### 主な機能
+
+- クリップボードから画像をペーストすると自動的に WebP に変換
+- ファイル名形式: 固定名 / タイムスタンプ
+- WebP 品質を 0.1〜1.0 で調整可能
+- 保存先: Vault ルート / 現在のノートと同じフォルダ / カスタムパス
+- 同名ファイルは自動で連番付与
+- 画像サイズ・ファイルサイズの上限設定（DoS 対策）
+
+### 使い方
+
+1. 設定 → コミュニティプラグイン から **Paste Image as WebP** を有効化
+2. プラグイン設定でファイル名形式・保存先・品質などを設定
+3. 画像をコピーしてエディタに Ctrl+V / Cmd+V でペースト
+
+### ネットワーク・ファイルシステム
+
+このプラグインは外部通信を一切行わず、Vault 外のファイルにアクセスすることもありません。画像変換は `<canvas>` の `toBlob('image/webp', …)` API を使って端末内で完結します。
+
+### ライセンス
+
+[MIT](LICENSE)

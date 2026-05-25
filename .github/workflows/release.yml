@@ -11,10 +11,10 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Use Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: "22.x"
 
@@ -22,11 +22,6 @@ jobs:
         run: |
           npm install
           npm run build
-
-      - name: Prepare release assets
-        run: |
-          cp releases/manifest.json .
-          cp releases/styles.css . || true
 
       - name: Create release
         env:
